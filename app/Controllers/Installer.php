@@ -272,6 +272,14 @@ class Installer extends Controller
     }
 
     /**
+     * Alias for Step 6 route: /install/install
+     */
+    public function install()
+    {
+        return $this->installation();
+    }
+
+    /**
      * Step 6 & 7 AJAX: Execute MySQL migrations, seeding, .env generation, and lockfile
      */
     public function runInstall()

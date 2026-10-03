@@ -153,7 +153,9 @@ $routes->group('admin', static function ($routes) {
 // ==========================================
 // 5. WEB INSTALLER WIZARD ROUTES
 // ==========================================
+$routes->get('install', 'Installer::index');
 $routes->group('install', static function ($routes) {
+    $routes->get('/', 'Installer::index');
     $routes->get('', 'Installer::index');
     $routes->get('requirements', 'Installer::requirements');
     $routes->get('database', 'Installer::database');
@@ -163,6 +165,7 @@ $routes->group('install', static function ($routes) {
     $routes->post('configuration', 'Installer::saveConfiguration');
     $routes->get('admin', 'Installer::admin');
     $routes->post('admin', 'Installer::saveAdmin');
+    $routes->get('install', 'Installer::installation');
     $routes->get('installation', 'Installer::installation');
     $routes->post('run-install', 'Installer::runInstall');
     $routes->post('process', 'Installer::process');

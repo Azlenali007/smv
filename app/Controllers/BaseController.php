@@ -25,20 +25,33 @@ abstract class BaseController extends Controller
     {
         parent::initController($request, $response, $logger);
 
-        $this->settingModel    = new SettingModel();
-        $this->currencyService = new CurrencyService();
+        $settings = [];
+        $currencies = [];
 
-        // Load dynamic site settings
-        $settings = $this->settingModel->getAllAsAssociative();
+        try {
+            $this->settingModel    = new SettingModel();
+            $this->currencyService = new CurrencyService();
+            $settings              = $this->settingModel->getAllAsAssociative();
+
+            $currModel = new CurrencyModel();
+            $currencies = $currModel->getActiveCurrencies();
+        } catch (\Throwable $e) {
+            // Database not configured or not installed yet - provide fallback
+            $this->currencyService = new CurrencyService();
+        }
+
         $this->data['site_name']        = $settings['site_name'] ?? 'ApexPulse';
         $this->data['site_description'] = $settings['site_description'] ?? 'Premium Next-Generation SMM Growth Platform';
         $this->data['site_logo']        = $settings['site_logo'] ?? null;
         $this->data['site_favicon']     = $settings['site_favicon'] ?? null;
         $this->data['contact_email']    = $settings['contact_email'] ?? 'support@apexpulse.io';
 
-        // Load active currencies for currency switcher
-        $currModel = new CurrencyModel();
-        $this->data['currencies'] = $currModel->getActiveCurrencies();
+        $this->data['currencies'] = !empty($currencies) ? $currencies : [
+            ['code' => 'INR', 'symbol' => '₹', 'name' => 'Indian Rupee', 'exchange_rate' => 1.0, 'is_base' => 1],
+            ['code' => 'USD', 'symbol' => '$', 'name' => 'US Dollar', 'exchange_rate' => 86.50, 'is_base' => 0],
+            ['code' => 'EUR', 'symbol' => '€', 'name' => 'Euro', 'exchange_rate' => 94.20, 'is_base' => 0],
+            ['code' => 'GBP', 'symbol' => '£', 'name' => 'British Pound', 'exchange_rate' => 110.80, 'is_base' => 0],
+        ];
 
         // Determine current user display currency
         $session = session();

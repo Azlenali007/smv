@@ -30,6 +30,8 @@ class Filters extends BaseConfig
                 'except' => [
                     'api/*',
                     'webhook/*',
+                    'install',
+                    'install/*',
                 ],
             ],
         ],

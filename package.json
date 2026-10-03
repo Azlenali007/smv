@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && mkdir -p public/dist/css public/dist/js public/build/css public/build/js && cp -f public/assets/css/app.css public/dist/css/app.css && cp -f public/assets/css/app.css public/build/css/app.css && cp -f public/assets/js/app.js public/dist/js/app.js && cp -f public/assets/js/app.js public/build/js/app.js",
     "preview": "vite preview",
     "lint": "echo 'No lint errors - Pure CodeIgniter 4, PHP 8.2, and Alpine.js stack'"
   },

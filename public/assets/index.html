@@ -16,13 +16,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS 4 Entry Point -->
-    <link rel="stylesheet" href="/resources/css/app.css" />
 
-    <style>
-      body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050811; color: #F8FAFC; }
-      .font-mono { font-family: 'JetBrains Mono', monospace; }
-      [x-cloak] { display: none !important; }
-    </style>
+    <style>body{color:#f8fafc;background-color:#050811;font-family:Plus Jakarta Sans,sans-serif}.font-mono{font-family:JetBrains Mono,monospace}[x-cloak]{display:none!important}</style>
+    <script type="module" crossorigin src="/js/main.js"></script>
+    <link rel="modulepreload" crossorigin href="/js/app.js">
+    <link rel="stylesheet" crossorigin href="/css/app.css">
   </head>
   <body class="min-h-screen bg-[#050811] text-slate-100 antialiased selection:bg-blue-600 selection:text-white"
         x-data="{
@@ -1702,6 +1700,5 @@
     </div>
 
     <!-- Frontend Entry Point script (Alpine.js and Tailwind compilation via Vite) -->
-    <script type="module" src="/resources/js/app.js"></script>
   </body>
 </html>

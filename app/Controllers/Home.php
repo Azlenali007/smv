@@ -18,14 +18,26 @@ class Home extends BaseController
             return redirect()->to(site_url('dashboard'));
         }
 
-        $categoryModel = new CategoryModel();
-        $serviceModel  = new ServiceModel();
+        // If not installed yet, redirect to web installer
+        if (!file_exists(WRITEPATH . 'installed.lock') && !file_exists(WRITEPATH . 'install.lock')) {
+            return redirect()->to(site_url('install'));
+        }
 
-        $categories = $categoryModel->getActiveCategories();
-        $services   = $serviceModel->getActiveServices();
+        $categories = [];
+        $services   = [];
+
+        try {
+            $categoryModel = new CategoryModel();
+            $serviceModel  = new ServiceModel();
+
+            $categories = $categoryModel->getActiveCategories();
+            $services   = $serviceModel->getActiveServices();
+        } catch (\Throwable $e) {
+            // Safe fallback on database connectivity error
+        }
 
         return $this->renderView('home/index', [
-            'title'      => $this->data['site_name'] . ' | Premium Social Media Marketing Infrastructure',
+            'title'      => ($this->data['site_name'] ?? 'ApexPulse') . ' | Premium Social Media Marketing Infrastructure',
             'categories' => $categories,
             'services'   => $services,
         ]);

@@ -4,6 +4,7 @@
  * Zero TypeScript / Zero React
  */
 
+import '../css/app.css';
 import Alpine from 'alpinejs';
 
 // Register global Alpine store for live preview & UI state

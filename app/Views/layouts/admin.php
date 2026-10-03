@@ -8,8 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
+    <!-- Production Compiled Tailwind CSS & Alpine.js -->
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <script defer src="<?= base_url('assets/js/app.js') ?>"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="/resources/css/app.css">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #040711; color: #F1F5F9; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }

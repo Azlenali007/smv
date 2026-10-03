@@ -9,13 +9,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Alpine.js & Tailwind CSS 4 -->
+    <!-- Production Compiled Tailwind CSS & Alpine.js -->
+    <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <script defer src="<?= base_url('assets/js/app.js') ?>"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="/resources/css/app.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #040711; color: #F1F5F9; }
+        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background-color: #040711; color: #F1F5F9; margin: 0; padding: 0; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         [x-cloak] { display: none !important; }
+        /* Robust baseline fallback CSS ensuring page never renders white/blank even if external CSS is unreachable */
+        .fallback-container { max-width: 48rem; margin: 2rem auto; padding: 1.5rem; }
+        .fallback-card { background: #080D1D; border: 1px solid #1E293B; border-radius: 1rem; padding: 2rem; color: #F1F5F9; }
+        a { color: #3B82F6; }
+        input, select, textarea { background-color: #050914; color: #FFFFFF; border: 1px solid #1E293B; border-radius: 0.75rem; padding: 0.65rem 1rem; width: 100%; box-sizing: border-box; }
+        button, .btn-primary { background-color: #2563EB; color: #FFFFFF; border: none; border-radius: 0.75rem; padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="min-h-full bg-[#040711] text-slate-100 antialiased selection:bg-blue-600 selection:text-white flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden">
