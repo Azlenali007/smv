@@ -1,0 +1,6 @@
+{
+  "name": "ApexPulse SMM - Modern SMM Panel",
+  "description": "High-performance CodeIgniter 4 SMM Panel platform with multi-provider API sync, atomic wallet management, multi-currency conversion, and sleek midnight neon glassmorphism UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

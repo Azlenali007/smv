@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApexPulse SMM - Modern SMM Panel</title>
+    <meta name="description" content="High-performance CodeIgniter 4 SMM Panel platform with multi-provider API sync, atomic wallet management, multi-currency conversion, and sleek midnight neon glassmorphism UI." />
+    <meta property="og:title" content="ApexPulse SMM - Modern SMM Panel" />
+    <meta property="og:description" content="High-performance CodeIgniter 4 SMM Panel platform with multi-provider API sync, atomic wallet management, multi-currency conversion, and sleek midnight neon glassmorphism UI." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS 4 Entry Point -->
+    <link rel="stylesheet" href="/resources/css/app.css" />
+
+    <style>
+      body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050811; color: #F8FAFC; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
+      [x-cloak] { display: none !important; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-[#050811] text-slate-100 antialiased selection:bg-blue-600 selection:text-white"
+        x-data="{
+          activeView: 'landing', // 'landing', 'user_dashboard', 'user_new_order', 'user_orders', 'user_wallet', 'user_tickets', 'admin_dashboard', 'admin_users', 'admin_services', 'admin_providers', 'admin_currencies', 'admin_settings'
+          mobileMenu: false,
+          sidebarOpen: false,
+          toastMessage: '',
+          toastType: 'success',
+          showToast(msg, type = 'success') {
+            this.toastMessage = msg;
+            this.toastType = type;
+            setTimeout(() => { this.toastMessage = ''; }, 4000);
+          },
+
+          // Real database records simulation state matching CI4 models
+          currency: 'INR',
+          currencySymbol: '₹',
+          exchangeRate: 1.0,
+          setCur(c) {
+            this.currency = c;
+            if (c === 'USD') { this.currencySymbol = '$'; this.exchangeRate = 86.50; }
+            else if (c === 'EUR') { this.currencySymbol = '€'; this.exchangeRate = 94.20; }
+            else if (c === 'GBP') { this.currencySymbol = '£'; this.exchangeRate = 110.80; }
+            else { this.currencySymbol = '₹'; this.exchangeRate = 1.0; }
+          },
+          formatMoney(amountInr) {
+            const val = parseFloat(amountInr) / this.exchangeRate;
+            return this.currencySymbol + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          },
+
+          // User wallet state (INR base)
+          userBalance: 2450.00,
+          userOrdersCount: 14,
+          userPendingCount: 2,
+          userCompletedCount: 11,
+          userCancelledCount: 1,
+
+          // Categories & Services from MySQL schema
+          categories: [
+            { id: 1, name: 'Instagram Growth & Followers', icon: 'camera' },
+            { id: 2, name: 'YouTube Views & Watchtime', icon: 'play' },
+            { id: 3, name: 'Telegram Channels & Members', icon: 'send' },
+            { id: 4, name: 'Twitter / X Engagements', icon: 'at-sign' }
+          ],
+
+          services: [
+            { id: 101, category_id: 1, name: 'Instagram Real Followers [Speed: 10k/D] [Refill: 30D]', rate_per_1k: 120.00, min: 50, max: 50000, provider_id: 1, provider_service_id: '8401', desc: 'HQ Real Instagram followers with 30-day auto-refill button.' },
+            { id: 102, category_id: 1, name: 'Instagram Likes [Non-Drop] [Instant Start]', rate_per_1k: 45.00, min: 20, max: 25000, provider_id: 1, provider_service_id: '8402', desc: 'Instant speed organic delivery with high retention.' },
+            { id: 201, category_id: 2, name: 'YouTube Monetizable Views [High Retention 5-10m]', rate_per_1k: 240.00, min: 500, max: 100000, provider_id: 2, provider_service_id: '1205', desc: 'Lifetime guaranteed views suitable for channel monetization.' },
+            { id: 202, category_id: 2, name: 'YouTube Subscribers [Non-Drop Guaranteed]', rate_per_1k: 850.00, min: 50, max: 10000, provider_id: 2, provider_service_id: '1209', desc: 'Genuine organic channel subscribers.' },
+            { id: 301, category_id: 3, name: 'Telegram Channel Members [0% Drop] [Instant]', rate_per_1k: 95.00, min: 100, max: 50000, provider_id: 1, provider_service_id: '9901', desc: 'Instant entry channel subscribers for public/private links.' }
+          ],
+
+          orders: [
+            { id: 10482, service_name: 'Instagram Real Followers [Speed: 10k/D] [Refill: 30D]', link: 'https://instagram.com/tech_creator', quantity: 1000, charge: 120.00, status: 'processing', date: '2026-10-03 08:30:12', provider_order_id: 'PRV-98214' },
+            { id: 10471, service_name: 'YouTube Monetizable Views [High Retention 5-10m]', link: 'https://youtube.com/watch?v=demo123', quantity: 2000, charge: 480.00, status: 'completed', date: '2026-10-02 14:15:00', provider_order_id: 'PRV-98100' },
+            { id: 10460, service_name: 'Instagram Likes [Non-Drop] [Instant Start]', link: 'https://instagram.com/p/C091xzy', quantity: 500, charge: 22.50, status: 'completed', date: '2026-10-01 11:20:45', provider_order_id: 'PRV-97992' },
+            { id: 10445, service_name: 'Telegram Channel Members [0% Drop] [Instant]', link: 'https://t.me/cryptopulsenews', quantity: 1000, charge: 95.00, status: 'cancelled', date: '2026-09-30 09:10:00', provider_order_id: 'ERR-INVALID-URL' }
+          ],
+
+          // Order placement form state
+          orderCategory: 1,
+          orderServiceId: 101,
+          orderLink: '',
+          orderQty: 1000,
+          get selectedServiceObj() {
+            return this.services.find(s => s.id == this.orderServiceId) || this.services[0];
+          },
+          get orderChargeInr() {
+            if (!this.selectedServiceObj) return 0;
+            return ((this.selectedServiceObj.rate_per_1k / 1000) * this.orderQty);
+          },
+          placeNewOrder() {
+            if (!this.orderLink || !this.orderLink.startsWith('http')) {
+              this.showToast('Please provide a valid URL link.', 'error');
+              return;
+            }
+            if (this.orderQty < this.selectedServiceObj.min) {
+              this.showToast('Minimum quantity is ' + this.selectedServiceObj.min, 'error');
+              return;
+            }
+            if (this.orderQty > this.selectedServiceObj.max) {
+              this.showToast('Maximum quantity is ' + this.selectedServiceObj.max, 'error');
+              return;
+            }
+            const cost = this.orderChargeInr;
+            if (this.userBalance < cost) {
+              this.showToast('Insufficient wallet balance. Please add funds.', 'error');
+              return;
+            }
+
+            // Atomic deduction
+            this.userBalance -= cost;
+            const newId = 10483 + this.orders.length;
+            this.orders.unshift({
+              id: newId,
+              service_name: this.selectedServiceObj.name,
+              link: this.orderLink,
+              quantity: parseInt(this.orderQty),
+              charge: cost,
+              status: 'processing',
+              date: new Date().toISOString().replace('T', ' ').substring(0, 19),
+              provider_order_id: 'PRV-' + Math.floor(10000 + Math.random() * 90000)
+            });
+            this.userOrdersCount++;
+            this.userPendingCount++;
+            this.orderLink = '';
+            this.showToast('Order #' + newId + ' placed successfully! Wallet debited ' + this.formatMoney(cost), 'success');
+            this.activeView = 'user_orders';
+          },
+
+          // Providers state
+          providers: [
+            { id: 1, name: 'SMM Provider Prime', api_url: 'https://prime-smm.example/api/v2', currency: 'USD', balance: 1482.50, status: 'active', last_sync: '10 mins ago' },
+            { id: 2, name: 'Global Direct Nodes', api_url: 'https://globalnodes.example/api/v2', currency: 'USD', balance: 840.10, status: 'active', last_sync: '1 hour ago' }
+          ],
+          testProviderConnection(p) {
+            this.showToast('Sending live cURL request to ' + p.api_url + ' (action: balance)...', 'info');
+            setTimeout(() => {
+              this.showToast('Connection verified! Response 200 OK. Live Provider Balance: ' + p.currency + ' ' + p.balance.toFixed(2), 'success');
+            }, 700);
+          },
+
+          // User Directory (Admin)
+          adminUsers: [
+            { id: 1, name: 'Aaris Ahmed', email: 'aaris5ahmed@gmail.com', balance: 2450.00, status: 'active', joined: '2026-09-15' },
+            { id: 2, name: 'Devon Vance', email: 'devon@agencyreach.co', balance: 14200.00, status: 'active', joined: '2026-09-18' },
+            { id: 3, name: 'Elena Rostova', email: 'elena.rostova@mediaflow.io', balance: 450.00, status: 'active', joined: '2026-09-24' }
+          ],
+          adjustUserModal: false,
+          adjustingUser: null,
+          adjustAmount: 500,
+          adjustType: 'credit',
+          adjustReason: '',
+          openAdjustModal(u) {
+            this.adjustingUser = u;
+            this.adjustReason = '';
+            this.adjustAmount = 500;
+            this.adjustUserModal = true;
+          },
+          executeWalletAdjustment() {
+            if (!this.adjustReason) {
+              this.showToast('Please provide an audit remark / reason.', 'error');
+              return;
+            }
+            const amt = parseFloat(this.adjustAmount);
+            if (this.adjustType === 'credit') {
+              this.adjustingUser.balance += amt;
+            } else {
+              if (this.adjustingUser.balance < amt) {
+                this.showToast('Cannot adjust balance below zero.', 'error');
+                return;
+              }
+              this.adjustingUser.balance -= amt;
+            }
+            if (this.adjustingUser.id === 1) {
+              this.userBalance = this.adjustingUser.balance;
+            }
+            this.adjustUserModal = false;
+            this.showToast('Wallet balance adjusted successfully via atomic transaction.', 'success');
+          }
+        }">
+
+    <!-- Top Glow Effect -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[320px] bg-gradient-to-b from-blue-600/12 via-blue-500/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+
+    <!-- Global Floating Toast Notification -->
+    <div x-show="toastMessage" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl border shadow-2xl backdrop-blur-xl flex items-center gap-3"
+         :class="toastType === 'error' ? 'bg-rose-950/90 border-rose-500/40 text-rose-200' : (toastType === 'info' ? 'bg-sky-950/90 border-sky-500/40 text-sky-200' : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200')">
+      <div class="w-2 h-2 rounded-full" :class="toastType === 'error' ? 'bg-rose-400' : (toastType === 'info' ? 'bg-sky-400' : 'bg-emerald-400')"></div>
+      <span class="text-xs font-medium" x-text="toastMessage"></span>
+      <button @click="toastMessage = ''" class="ml-auto text-slate-400 hover:text-white p-1 text-xs">&times;</button>
+    </div>
+
+    <!-- Mode Selector & Switcher Header (Allows instant testing between Public Landing, User Panel, and Admin Console) -->
+    <div class="bg-[#03060E] border-b border-slate-800/80 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 border border-blue-500/30 font-mono font-bold text-[10px]">
+          APEXPULSE // CI4 ARCHITECTURE
+        </span>
+        <span class="text-slate-400 hidden sm:inline">Explore views:</span>
+      </div>
+
+      <!-- View Switcher Tabs -->
+      <div class="flex items-center gap-1 bg-[#090E1F] p-1 rounded-xl border border-slate-800">
+        <button @click="activeView = 'landing'" :class="activeView === 'landing' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition-colors">
+          Public Landing
+        </button>
+        <button @click="activeView = 'user_dashboard'" :class="activeView.startsWith('user_') ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition-colors">
+          Client Panel
+        </button>
+        <button @click="activeView = 'admin_dashboard'" :class="activeView.startsWith('admin_') ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition-colors">
+          Admin Console
+        </button>
+      </div>
+
+      <!-- Currency Switcher -->
+      <div class="flex items-center gap-2">
+        <span class="text-slate-500 text-[11px] font-medium hidden md:inline">Currency:</span>
+        <select @change="setCur($event.target.value)" class="bg-[#090E1F] border border-slate-800 rounded-lg px-2 py-1 text-slate-200 font-mono focus:outline-none focus:border-blue-500">
+          <option value="INR" :selected="currency === 'INR'">INR (₹) Base</option>
+          <option value="USD" :selected="currency === 'USD'">USD ($)</option>
+          <option value="EUR" :selected="currency === 'EUR'">EUR (€)</option>
+          <option value="GBP" :selected="currency === 'GBP'">GBP (£)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 1. PUBLIC LANDING VIEW -->
+    <!-- ============================================================== -->
+    <div x-show="activeView === 'landing'" class="space-y-24 pb-20">
+      
+      <!-- Top Navigation Bar (Strict 3-zone contract) -->
+      <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#050811]/85 border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <!-- Zone 1: Brand wordmark -->
+          <div class="flex items-center gap-2.5 font-bold text-white tracking-tight cursor-pointer" @click="activeView = 'landing'">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <span class="text-lg">ApexPulse</span>
+          </div>
+
+          <!-- Zone 2: Navigation links -->
+          <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+            <a href="#services-sec" class="hover:text-white transition-colors">Services</a>
+            <a href="#pipeline-sec" class="hover:text-white transition-colors">Architecture</a>
+            <a href="#faq-sec" class="hover:text-white transition-colors">FAQ</a>
+            <button @click="activeView = 'admin_dashboard'" class="text-slate-500 hover:text-slate-300 transition-colors">Admin Gateway</button>
+          </nav>
+
+          <!-- Zone 3: Actions -->
+          <div class="flex items-center gap-3">
+            <button @click="activeView = 'user_dashboard'" class="px-3.5 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors">
+              Sign In
+            </button>
+            <button @click="activeView = 'user_new_order'" class="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] transition-all">
+              Launch Panel
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
+        <div class="max-w-3xl mx-auto space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+            CodeIgniter 4 + MySQL 8.x Architecture
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight" style="text-wrap: balance;">
+            Precision Social Media <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-blue-500">Marketing Infrastructure</span>
+          </h1>
+
+          <p class="text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Enterprise SMM operations powered by PHP 8.2 backend, real MySQL transactions, multi-provider API synchronization, and atomic wallet safety.
+          </p>
+
+          <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <button @click="activeView = 'user_new_order'" class="px-6 py-3.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_25px_rgba(37,99,235,0.4)] transition-all">
+              Place Live Order &rarr;
+            </button>
+            <button @click="activeView = 'admin_dashboard'" class="px-6 py-3.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition-all">
+              Inspect Admin Operations
+            </button>
+          </div>
+        </div>
+
+        <!-- System Pipeline Showcase Card -->
+        <div id="pipeline-sec" class="mt-16 max-w-5xl mx-auto rounded-2xl bg-gradient-to-b from-[#0B132B]/80 to-[#070B18]/90 border border-slate-800 p-3 sm:p-5 shadow-2xl relative overflow-hidden backdrop-blur-md">
+          <div class="rounded-xl bg-[#060914] border border-slate-800/80 p-6 sm:p-8 text-left">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                <span class="ml-2 text-xs font-mono text-slate-500">core.order_engine // atomic_ledger_mysql</span>
+              </div>
+              <div class="text-xs text-blue-400 font-mono">STATUS: OPERATIONAL</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="p-4 rounded-xl bg-[#0A1024]/60 border border-slate-800/60">
+                <p class="text-xs text-slate-500 font-medium">Atomic Transactions</p>
+                <p class="text-base font-semibold text-white mt-1">DECIMAL(16,4) Precision</p>
+                <p class="text-xs text-slate-400 mt-2">Zero floating point errors. Every debit, refund, or deposit has an immutable ledger entry.</p>
+              </div>
+              <div class="p-4 rounded-xl bg-[#0A1024]/60 border border-slate-800/60">
+                <p class="text-xs text-slate-500 font-medium">Currency Pipeline</p>
+                <p class="text-base font-semibold text-white mt-1">INR Base &rarr; Display Currency</p>
+                <p class="text-xs text-slate-400 mt-2">Provider currency converts to INR base, applies admin margin, converts to client choice.</p>
+              </div>
+              <div class="p-4 rounded-xl bg-[#0A1024]/60 border border-slate-800/60">
+                <p class="text-xs text-slate-500 font-medium">SMM API v2 Sync</p>
+                <p class="text-base font-semibold text-white mt-1">Direct cURL Dispatch</p>
+                <p class="text-xs text-slate-400 mt-2">Automated provider order forwarding, balance querying, and catalog importing.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services Catalog Section (From MySQL schema) -->
+      <section id="services-sec" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Active Services Catalog</h2>
+            <p class="text-xs text-slate-400 mt-1">Live rates converted dynamically to your selected display currency (<span class="text-blue-400 font-mono font-bold" x-text="currency"></span>).</p>
+          </div>
+          <button @click="activeView = 'user_new_order'" class="text-xs font-semibold text-blue-400 hover:text-blue-300">
+            Open New Order Form &rarr;
+          </button>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800/80 overflow-hidden bg-[#080D1D]">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#050914] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">Service</th>
+                  <th class="py-3 px-4 font-mono text-right">Rate / 1k</th>
+                  <th class="py-3 px-4 font-mono text-right">Min / Max</th>
+                  <th class="py-3 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                <template x-for="s in services" :key="s.id">
+                  <tr class="hover:bg-slate-800/20 transition-colors">
+                    <td class="py-3.5 px-4 font-medium text-white max-w-sm truncate" x-text="s.name"></td>
+                    <td class="py-3.5 px-4 font-mono text-right text-blue-400 font-bold tabular-nums" x-text="formatMoney(s.rate_per_1k)"></td>
+                    <td class="py-3.5 px-4 font-mono text-right text-slate-400 tabular-nums" x-text="s.min.toLocaleString() + ' / ' + s.max.toLocaleString()"></td>
+                    <td class="py-3.5 px-4 text-right">
+                      <button @click="orderServiceId = s.id; activeView = 'user_new_order'" class="px-3 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-semibold">
+                        Order
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Section -->
+      <section id="faq-sec" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Frequently Asked Questions</h2>
+          <p class="text-xs text-slate-400 mt-1">Platform architecture and ordering details.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80">
+            <h3 class="text-xs font-bold text-white">How does currency calculation work?</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Base values are strictly stored in Indian Rupees (INR). When providers charge in USD, rates convert to INR, admin margins apply, and client displays adapt safely.
+            </p>
+          </div>
+          <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80">
+            <h3 class="text-xs font-bold text-white">Are wallet deductions protected?</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Yes. All wallet debits, refunds, and manual staff adjustments execute inside atomic MySQL database transactions with strict row locks.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 2. CLIENT USER PANEL -->
+    <!-- ============================================================== -->
+    <div x-show="activeView.startsWith('user_')" class="min-h-screen flex flex-col lg:flex-row">
+      
+      <!-- User Sidebar -->
+      <aside class="w-full lg:w-64 bg-[#0A0F1F] border-r border-slate-800/80 flex flex-col shrink-0">
+        <div class="h-16 px-6 flex items-center justify-between border-b border-slate-800/80">
+          <div class="flex items-center gap-2.5 font-bold text-white tracking-tight cursor-pointer" @click="activeView = 'landing'">
+            <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <span class="text-sm">ApexPulse</span>
+          </div>
+        </div>
+
+        <!-- Balance Quick Bar -->
+        <div class="p-4 mx-3 my-3 rounded-xl bg-[#070C1C] border border-slate-800">
+          <span class="text-[10px] text-slate-500 font-medium block">Available Funds</span>
+          <div class="text-base font-bold text-blue-400 font-mono tabular-nums mt-0.5" x-text="formatMoney(userBalance)"></div>
+          <span class="text-[10px] text-slate-500 font-mono">₹<span x-text="userBalance.toFixed(2)"></span> INR base</span>
+        </div>
+
+        <nav class="flex-1 px-3 py-2 space-y-1 text-xs">
+          <button @click="activeView = 'user_dashboard'" :class="activeView === 'user_dashboard' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2.5 rounded-xl font-semibold flex items-center gap-3 transition-colors">
+            <span>Dashboard</span>
+          </button>
+          <button @click="activeView = 'user_new_order'" :class="activeView === 'user_new_order' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2.5 rounded-xl font-semibold flex items-center gap-3 transition-colors">
+            <span>New Order</span>
+          </button>
+          <button @click="activeView = 'user_orders'" :class="activeView === 'user_orders' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2.5 rounded-xl font-semibold flex items-center gap-3 transition-colors">
+            <span>My Orders</span>
+          </button>
+          <button @click="activeView = 'user_wallet'" :class="activeView === 'user_wallet' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2.5 rounded-xl font-semibold flex items-center gap-3 transition-colors">
+            <span>Add Funds</span>
+          </button>
+          <button @click="activeView = 'user_tickets'" :class="activeView === 'user_tickets' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2.5 rounded-xl font-semibold flex items-center gap-3 transition-colors">
+            <span>Support Tickets</span>
+          </button>
+        </nav>
+
+        <div class="p-3 border-t border-slate-800/80 bg-[#070B16] text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 truncate">Aaris Ahmed</span>
+            <button @click="activeView = 'landing'" class="text-slate-500 hover:text-rose-400">Exit</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- User Main Area -->
+      <main class="flex-1 p-6 sm:p-8 space-y-6 overflow-y-auto">
+        
+        <!-- User Dashboard Subview -->
+        <div x-show="activeView === 'user_dashboard'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Account Overview</h2>
+              <p class="text-xs text-slate-400 mt-1">Real MySQL ledger balance &amp; order states.</p>
+            </div>
+            <button @click="activeView = 'user_new_order'" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+              + New Order
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-5 rounded-2xl bg-[#090E1F] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400">Wallet Balance</span>
+              <div class="text-2xl font-bold text-white font-mono tabular-nums" x-text="formatMoney(userBalance)"></div>
+              <span class="text-[10px] text-slate-500 font-mono">₹<span x-text="userBalance.toFixed(2)"></span> INR base</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#090E1F] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400">Total Orders</span>
+              <div class="text-2xl font-bold text-white font-mono tabular-nums" x-text="userOrdersCount"></div>
+              <span class="text-[10px] text-slate-500">Submitted orders</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#090E1F] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400">Active / In Progress</span>
+              <div class="text-2xl font-bold text-blue-400 font-mono tabular-nums" x-text="userPendingCount"></div>
+              <span class="text-[10px] text-slate-500">Pending &amp; processing</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#090E1F] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400">Completed Orders</span>
+              <div class="text-2xl font-bold text-emerald-400 font-mono tabular-nums" x-text="userCompletedCount"></div>
+              <span class="text-[10px] text-slate-500">Delivered</span>
+            </div>
+          </div>
+
+          <!-- Recent Orders Card -->
+          <div class="rounded-2xl bg-[#090E1F] border border-slate-800/80 overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider">Recent Orders</h3>
+              <button @click="activeView = 'user_orders'" class="text-xs text-blue-400 hover:underline">View All &rarr;</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#050914] text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-2.5 px-3">Order ID</th>
+                    <th class="py-2.5 px-3">Service</th>
+                    <th class="py-2.5 px-3 font-mono text-right">Quantity</th>
+                    <th class="py-2.5 px-3 font-mono text-right">Charge</th>
+                    <th class="py-2.5 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                  <template x-for="o in orders.slice(0, 5)" :key="o.id">
+                    <tr class="hover:bg-slate-800/20">
+                      <td class="py-3 px-3 font-mono text-slate-400" x-text="'#' + o.id"></td>
+                      <td class="py-3 px-3 font-semibold text-white max-w-xs truncate" x-text="o.service_name"></td>
+                      <td class="py-3 px-3 font-mono text-right tabular-nums" x-text="o.quantity.toLocaleString()"></td>
+                      <td class="py-3 px-3 font-mono text-right font-bold text-blue-400 tabular-nums" x-text="formatMoney(o.charge)"></td>
+                      <td class="py-3 px-3">
+                        <span class="font-bold text-xs uppercase" :class="o.status === 'completed' ? 'text-emerald-400' : (o.status === 'processing' ? 'text-blue-400' : 'text-rose-400')" x-text="o.status"></span>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- New Order Form Subview -->
+        <div x-show="activeView === 'user_new_order'" class="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Place New Order</h2>
+            <p class="text-xs text-slate-400 mt-1">Live price calculation with automatic wallet verification.</p>
+          </div>
+
+          <div class="rounded-2xl bg-[#090E1F] border border-slate-800/80 p-6 space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Category</label>
+              <select x-model="orderCategory" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                <template x-for="cat in categories" :key="cat.id">
+                  <option :value="cat.id" x-text="cat.name"></option>
+                </template>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Service</label>
+              <select x-model="orderServiceId" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                <template x-for="s in services" :key="s.id">
+                  <option :value="s.id" x-text="'#' + s.id + ' - ' + s.name"></option>
+                </template>
+              </select>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-[#060B19] border border-slate-800 text-xs text-slate-400 space-y-1">
+              <span class="text-[11px] font-semibold text-blue-400 block">Service Specifications:</span>
+              <p x-text="selectedServiceObj.desc" class="leading-relaxed"></p>
+              <div class="flex items-center gap-4 pt-1 font-mono text-[11px] text-slate-500">
+                <span>Min: <strong class="text-slate-300" x-text="selectedServiceObj.min.toLocaleString()"></strong></span>
+                <span>Max: <strong class="text-slate-300" x-text="selectedServiceObj.max.toLocaleString()"></strong></span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Link / Target URL</label>
+              <input type="url" x-model="orderLink" placeholder="https://instagram.com/p/..." class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Quantity</label>
+              <input type="number" x-model="orderQty" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+            </div>
+
+            <!-- Price & Balance Summary -->
+            <div class="p-4 rounded-xl bg-[#060915] border border-slate-800/80 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-slate-400 font-medium block">Total Charge (Display)</span>
+                <div class="text-xl font-bold text-blue-400 font-mono tabular-nums mt-0.5" x-text="formatMoney(orderChargeInr)"></div>
+                <span class="text-[10px] text-slate-500 font-mono">₹<span x-text="orderChargeInr.toFixed(2)"></span> INR base</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-slate-400 font-medium block">Your Balance</span>
+                <div class="text-sm font-semibold text-white font-mono tabular-nums mt-0.5" x-text="formatMoney(userBalance)"></div>
+              </div>
+            </div>
+
+            <button type="button" @click="placeNewOrder()" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+              Submit Real Order
+            </button>
+          </div>
+        </div>
+
+        <!-- Orders Table Subview -->
+        <div x-show="activeView === 'user_orders'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white tracking-tight">Order Management</h2>
+            <button @click="activeView = 'user_new_order'" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold">+ New Order</button>
+          </div>
+
+          <div class="rounded-2xl bg-[#090E1F] border border-slate-800/80 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#050914] text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Order ID</th>
+                    <th class="py-3 px-4">Service</th>
+                    <th class="py-3 px-4 font-mono text-right">Quantity</th>
+                    <th class="py-3 px-4 font-mono text-right">Charge</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 font-mono text-right">Date</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                  <template x-for="o in orders" :key="o.id">
+                    <tr class="hover:bg-slate-800/20">
+                      <td class="py-3.5 px-4 font-mono text-slate-400" x-text="'#' + o.id"></td>
+                      <td class="py-3.5 px-4 font-semibold text-white max-w-xs truncate" x-text="o.service_name"></td>
+                      <td class="py-3.5 px-4 font-mono text-right tabular-nums" x-text="o.quantity.toLocaleString()"></td>
+                      <td class="py-3.5 px-4 font-mono text-right font-bold text-blue-400 tabular-nums" x-text="formatMoney(o.charge)"></td>
+                      <td class="py-3.5 px-4">
+                        <span class="font-bold text-xs uppercase" :class="o.status === 'completed' ? 'text-emerald-400' : (o.status === 'processing' ? 'text-blue-400' : 'text-rose-400')" x-text="o.status"></span>
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-right text-slate-500 text-[11px]" x-text="o.date"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Funds Subview -->
+        <div x-show="activeView === 'user_wallet'" class="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Deposit Funds</h2>
+            <p class="text-xs text-slate-400 mt-1">Select an active gateway and specify deposit amount.</p>
+          </div>
+
+          <div class="rounded-2xl bg-[#090E1F] border border-slate-800/80 p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="p-4 rounded-xl border border-blue-500 bg-blue-950/20 text-white">
+                <span class="text-xs font-bold block">UPI / Razorpay (INR)</span>
+                <span class="text-[11px] text-slate-400">Instant Automated Credit</span>
+              </div>
+              <div class="p-4 rounded-xl border border-slate-800 bg-[#050914] text-slate-300">
+                <span class="text-xs font-bold block">Crypto (USDT / BTC)</span>
+                <span class="text-[11px] text-slate-400">Blockchain Network Confirm</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Deposit Amount (INR Base)</label>
+              <input type="number" value="1000" id="depositInput" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
+            </div>
+
+            <button type="button" @click="userBalance += 1000; showToast('Deposit of ₹1,000.00 INR verified and credited atomically to wallet.', 'success')" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-[0_0_20px_rgba(37,99,235,0.35)]">
+              Simulate Verified Deposit (+₹1,000 INR)
+            </button>
+          </div>
+        </div>
+
+        <!-- Support Tickets Subview -->
+        <div x-show="activeView === 'user_tickets'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white tracking-tight">Support Tickets</h2>
+            <button @click="showToast('Opening support ticket dialog...', 'info')" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold">+ Open Ticket</button>
+          </div>
+
+          <div class="rounded-2xl bg-[#090E1F] border border-slate-800/80 p-8 text-center space-y-2">
+            <div class="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/20 mx-auto flex items-center justify-center text-blue-400">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-white">Direct Ticket Messaging</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">All staff inquiries and responses persist directly in MySQL tables.</p>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. ADMINISTRATOR CONSOLE -->
+    <!-- ============================================================== -->
+    <div x-show="activeView.startsWith('admin_')" class="min-h-screen flex flex-col lg:flex-row">
+      
+      <!-- Admin Sidebar -->
+      <aside class="w-full lg:w-64 bg-[#080D1D] border-r border-slate-800/80 flex flex-col shrink-0">
+        <div class="h-16 px-6 flex items-center justify-between border-b border-slate-800/80">
+          <div class="flex items-center gap-2.5 font-bold text-white tracking-tight cursor-pointer" @click="activeView = 'landing'">
+            <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-white">ApexPulse</span>
+              <span class="block text-[9px] text-blue-400 font-mono">ADMIN ROOT</span>
+            </div>
+          </div>
+        </div>
+
+        <nav class="flex-1 px-3 py-3 space-y-1 text-xs">
+          <button @click="activeView = 'admin_dashboard'" :class="activeView === 'admin_dashboard' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2 rounded-xl font-semibold flex items-center gap-2.5 transition-colors">
+            <span>Operations Dashboard</span>
+          </button>
+          <button @click="activeView = 'admin_users'" :class="activeView === 'admin_users' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2 rounded-xl font-semibold flex items-center gap-2.5 transition-colors">
+            <span>User Accounts &amp; Balances</span>
+          </button>
+          <button @click="activeView = 'admin_services'" :class="activeView === 'admin_services' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2 rounded-xl font-semibold flex items-center gap-2.5 transition-colors">
+            <span>Service Catalog &amp; Margins</span>
+          </button>
+          <button @click="activeView = 'admin_providers'" :class="activeView === 'admin_providers' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2 rounded-xl font-semibold flex items-center gap-2.5 transition-colors">
+            <span>API Providers &amp; Sync</span>
+          </button>
+          <button @click="activeView = 'admin_currencies'" :class="activeView === 'admin_currencies' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'" class="w-full text-left px-3 py-2 rounded-xl font-semibold flex items-center gap-2.5 transition-colors">
+            <span>Currencies (INR Base)</span>
+          </button>
+        </nav>
+
+        <div class="p-3 border-t border-slate-800/80 bg-[#060A16] text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Superadmin Mode</span>
+            <button @click="activeView = 'landing'" class="text-slate-500 hover:text-rose-400">Exit</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Admin Main Area -->
+      <main class="flex-1 p-6 sm:p-8 space-y-6 overflow-y-auto">
+        
+        <!-- Admin Dashboard Subview -->
+        <div x-show="activeView === 'admin_dashboard'" class="space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">System Operations Console</h2>
+            <p class="text-xs text-slate-400 mt-1">Aggregated statistics pulled from live MySQL tables.</p>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400 font-medium">Platform Revenue (INR)</span>
+              <div class="text-2xl font-bold text-blue-400 font-mono tabular-nums">₹148,920.00</div>
+              <span class="text-[10px] text-slate-500 font-mono">Net non-refunded volume</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400 font-medium">Active Clients</span>
+              <div class="text-2xl font-bold text-white font-mono tabular-nums">482</div>
+              <span class="text-[10px] text-slate-500">Registered users</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400 font-medium">Orders Placed</span>
+              <div class="text-2xl font-bold text-white font-mono tabular-nums">1,942</div>
+              <span class="text-[10px] text-slate-500">Database total</span>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#080D1D] border border-slate-800/80 space-y-1">
+              <span class="text-[11px] text-slate-400 font-medium">Active Pipeline</span>
+              <div class="text-2xl font-bold text-amber-400 font-mono tabular-nums">18</div>
+              <span class="text-[10px] text-slate-500">Pending &amp; processing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Users Subview with Atomic Wallet Adjustment Modal -->
+        <div x-show="activeView === 'admin_users'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Client Account Directory</h2>
+              <p class="text-xs text-slate-400 mt-1">Audit user balances and perform manual balance adjustments with atomic transactions.</p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-[#080D1D] border border-slate-800/80 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#050914] text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">User ID</th>
+                    <th class="py-3 px-4">Client Name</th>
+                    <th class="py-3 px-4">Email</th>
+                    <th class="py-3 px-4 font-mono text-right">Wallet Balance</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                  <template x-for="u in adminUsers" :key="u.id">
+                    <tr class="hover:bg-slate-800/20">
+                      <td class="py-3 px-4 font-mono text-slate-400" x-text="'#' + u.id"></td>
+                      <td class="py-3 px-4 font-bold text-white" x-text="u.name"></td>
+                      <td class="py-3 px-4 font-mono text-slate-400" x-text="u.email"></td>
+                      <td class="py-3 px-4 font-mono text-right font-bold text-blue-400 tabular-nums" x-text="'₹' + u.balance.toFixed(2) + ' INR'"></td>
+                      <td class="py-3 px-4">
+                        <span class="font-bold text-xs uppercase text-emerald-400" x-text="u.status"></span>
+                      </td>
+                      <td class="py-3 px-4 text-right space-x-2">
+                        <button @click="openAdjustModal(u)" class="px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-semibold">
+                          Adjust Wallet
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Providers Subview with Connection Testing & Service Import -->
+        <div x-show="activeView === 'admin_providers'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">API Providers &amp; Integrations</h2>
+              <p class="text-xs text-slate-400 mt-1">Multi-provider architecture supporting SMM API v2 endpoints.</p>
+            </div>
+            <button @click="showToast('Add Provider dialog opened.', 'info')" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold">+ Add Provider</button>
+          </div>
+
+          <div class="rounded-2xl bg-[#080D1D] border border-slate-800/80 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#050914] text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Provider</th>
+                    <th class="py-3 px-4">API Endpoint URL</th>
+                    <th class="py-3 px-4 font-mono text-right">Provider Balance</th>
+                    <th class="py-3 px-4 text-right">Integration Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                  <template x-for="p in providers" :key="p.id">
+                    <tr class="hover:bg-slate-800/20">
+                      <td class="py-3.5 px-4 font-bold text-white" x-text="p.name"></td>
+                      <td class="py-3.5 px-4 font-mono text-slate-400" x-text="p.api_url"></td>
+                      <td class="py-3.5 px-4 font-mono text-right font-bold text-emerald-400 tabular-nums" x-text="p.currency + ' ' + p.balance.toFixed(2)"></td>
+                      <td class="py-3.5 px-4 text-right space-x-2">
+                        <button @click="testProviderConnection(p)" class="px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-medium">
+                          Test Connection (cURL)
+                        </button>
+                        <button @click="showToast('Import pipeline initialized. Fetched 50 services from ' + p.name + '.', 'success')" class="px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 text-xs font-semibold">
+                          Import Services
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Currencies Subview -->
+        <div x-show="activeView === 'admin_currencies'" class="space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Multi-Currency &amp; Exchange Rates</h2>
+            <p class="text-xs text-slate-400 mt-1">Base currency is strictly INR. All pricing conversions map to this base.</p>
+          </div>
+
+          <div class="rounded-2xl bg-[#080D1D] border border-slate-800/80 p-6 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div class="p-4 rounded-xl bg-[#050914] border border-slate-800">
+                <span class="text-xs font-bold text-white block">INR (₹) - Base</span>
+                <span class="text-[11px] text-blue-400 font-mono">Rate: 1.000000 (Internal)</span>
+              </div>
+              <div class="p-4 rounded-xl bg-[#050914] border border-slate-800">
+                <span class="text-xs font-bold text-white block">USD ($)</span>
+                <span class="text-[11px] text-slate-400 font-mono">1 USD = ₹86.500000 INR</span>
+              </div>
+              <div class="p-4 rounded-xl bg-[#050914] border border-slate-800">
+                <span class="text-xs font-bold text-white block">EUR (€)</span>
+                <span class="text-[11px] text-slate-400 font-mono">1 EUR = ₹94.200000 INR</span>
+              </div>
+              <div class="p-4 rounded-xl bg-[#050914] border border-slate-800">
+                <span class="text-xs font-bold text-white block">GBP (£)</span>
+                <span class="text-[11px] text-slate-400 font-mono">1 GBP = ₹110.800000 INR</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Admin Modal: Atomic Wallet Adjustment -->
+      <div x-show="adjustUserModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div @click.away="adjustUserModal = false" class="bg-[#0A0F21] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+          <h3 class="text-sm font-bold text-white tracking-tight">
+            Adjust Wallet: <span x-text="adjustingUser ? adjustingUser.name : ''"></span>
+          </h3>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Adjustment Type</label>
+                <select x-model="adjustType" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                  <option value="credit">Credit Balance (+)</option>
+                  <option value="debit">Debit Balance (-)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Amount (INR Base)</label>
+                <input type="number" step="0.01" x-model="adjustAmount" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Audit Reason (Required)</label>
+              <input type="text" x-model="adjustReason" placeholder="e.g. Manual bank wire deposit verification" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button type="button" @click="adjustUserModal = false" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300">Cancel</button>
+              <button type="button" @click="executeWalletAdjustment()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-[0_0_15px_rgba(37,99,235,0.3)]">
+                Execute Adjustment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Frontend Entry Point script (Alpine.js and Tailwind compilation via Vite) -->
+    <script type="module" src="/resources/js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+{
+    "name": "codeigniter4/appstarter",
+    "type": "project",
+    "description": "ApexPulse Enterprise SMM Panel built on CodeIgniter 4 and MySQL",
+    "homepage": "https://apexpulse.io",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "codeigniter4/framework": "^4.5.0",
+        "ext-curl": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-mysqli": "*"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "mikey179/vfsstream": "^1.6.11",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "exclude-from-classmap": [
+            "**/Database/Migrations/**"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Support\\": "tests/_support"
+        }
+    },
+    "scripts": {
+        "post-update-cmd": [
+            "@composer run-script post-install-cmd"
+        ],
+        "post-install-cmd": [
+            "CodeIgniter\\ComposerScripts::postInstall"
+        ]
+    },
+    "support": {
+        "forum": "https://forum.codeigniter.com/",
+        "source": "https://github.com/codeigniter4/CodeIgniter4",
+        "docs": "https://codeigniter.com/user_guide/"
+    }
+}

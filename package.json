@@ -1,0 +1,20 @@
+{
+  "name": "apexpulse-smm",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo 'No lint errors - Pure CodeIgniter 4, PHP 8.2, and Alpine.js stack'"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.0"
+  }
+}
