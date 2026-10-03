@@ -37,6 +37,80 @@
             setTimeout(() => { this.toastMessage = ''; }, 4000);
           },
 
+          // Web-based Installer Wizard State (CodeIgniter 4 + MySQL 8.x)
+          installerStep: 1, // 1 to 8
+          installerLocked: false,
+          installerHost: '127.0.0.1',
+          installerPort: 3306,
+          installerDbName: 'smm_panel',
+          installerDbUser: 'root',
+          installerDbPass: '',
+          installerTestingDb: false,
+          installerDbTested: false,
+          installerDbSuccess: true,
+          installerDbMsg: '',
+          installerShowPass: false,
+          installerSiteName: 'ApexPulse SMM',
+          installerSiteUrl: 'http://localhost:8080/',
+          installerAdminSlug: 'admin',
+          installerCurrency: 'INR',
+          installerTimezone: 'UTC',
+          installerEnv: 'production',
+          installerAdminName: 'Master Administrator',
+          installerAdminEmail: 'admin@apexpulse.io',
+          installerAdminPass: 'Password@2026',
+          installerAdminPassConfirm: 'Password@2026',
+          installerInstalling: false,
+          installerProgressPercent: 0,
+          installerActiveSubStep: 0,
+          installerCopiedIndex: null,
+          testInstallerDb() {
+            this.installerTestingDb = true;
+            this.installerDbTested = false;
+            setTimeout(() => {
+              this.installerTestingDb = false;
+              this.installerDbTested = true;
+              this.installerDbSuccess = true;
+              this.installerDbMsg = 'Connected successfully to MySQL 8.x server (host: ' + this.installerHost + ':' + this.installerPort + ') and verified schema \'' + this.installerDbName + '\'.';
+              this.showToast('MySQL database connection test verified successfully!', 'success');
+            }, 750);
+          },
+          runInstallerMigration() {
+            this.installerInstalling = true;
+            this.installerProgressPercent = 10;
+            this.installerActiveSubStep = 0;
+            
+            const steps = [
+              { pct: 20, sub: 1 },
+              { pct: 40, sub: 2 },
+              { pct: 60, sub: 3 },
+              { pct: 80, sub: 4 },
+              { pct: 95, sub: 5 },
+              { pct: 100, sub: 6 }
+            ];
+
+            let idx = 0;
+            const timer = setInterval(() => {
+              if (idx < steps.length) {
+                this.installerProgressPercent = steps[idx].pct;
+                this.installerActiveSubStep = steps[idx].sub;
+                idx++;
+              } else {
+                clearInterval(timer);
+                this.installerInstalling = false;
+                this.installerLocked = true;
+                this.installerStep = 8;
+                this.showToast('Installation and finalization completed successfully! Lock file created.', 'success');
+              }
+            }, 650);
+          },
+          copyCron(cmd, idx) {
+            navigator.clipboard.writeText(cmd);
+            this.installerCopiedIndex = idx;
+            this.showToast('Cron command copied to clipboard!', 'info');
+            setTimeout(() => { this.installerCopiedIndex = null; }, 2500);
+          },
+
           // Real database records simulation state matching CI4 models
           currency: 'INR',
           currencySymbol: '₹',
@@ -224,6 +298,10 @@
         <button @click="activeView = 'admin_dashboard'" :class="activeView.startsWith('admin_') ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition-colors">
           Admin Console
         </button>
+        <button @click="activeView = 'installer'" :class="activeView === 'installer' ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-white'" class="px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Web Installer (/install)</span>
+        </button>
       </div>
 
       <!-- Currency Switcher -->
@@ -261,6 +339,10 @@
             <a href="#services-sec" class="hover:text-white transition-colors">Services</a>
             <a href="#pipeline-sec" class="hover:text-white transition-colors">Architecture</a>
             <a href="#faq-sec" class="hover:text-white transition-colors">FAQ</a>
+            <button @click="activeView = 'installer'" class="text-emerald-400 hover:text-emerald-300 font-medium transition-colors flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Web Installer (/install)</span>
+            </button>
             <button @click="activeView = 'admin_dashboard'" class="text-slate-500 hover:text-slate-300 transition-colors">Admin Gateway</button>
           </nav>
 
@@ -922,6 +1004,681 @@
             </div>
           </div>
         </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 4. WEB-BASED INSTALLER WIZARD (/install) -->
+    <!-- ============================================================== -->
+    <div x-show="activeView === 'installer'" class="min-h-screen py-10 px-4 sm:px-6 lg:px-8 flex flex-col justify-center relative">
+      
+      <div class="max-w-3xl w-full mx-auto space-y-6">
+        
+        <!-- Header Branding & Steps Tracker -->
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2.5 cursor-pointer" @click="activeView = 'landing'">
+            <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.45)]">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <span class="text-xl font-extrabold tracking-tight text-white">ApexPulse</span>
+          </div>
+          <p class="text-xs text-slate-400">Web-Based Platform Setup Wizard &bull; CodeIgniter 4 + MySQL 8.x</p>
+
+          <!-- 8-Step Tracker -->
+          <div class="pt-3">
+            <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-2 text-[10px] sm:text-[11px] font-mono">
+              <span @click="if(!installerLocked) installerStep = 1" class="cursor-pointer px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 1 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 1 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">1. Welcome</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span @click="if(!installerLocked) installerStep = 2" class="cursor-pointer px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 2 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 2 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">2. Checks</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span @click="if(!installerLocked) installerStep = 3" class="cursor-pointer px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 3 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 3 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">3. Database</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span @click="if(!installerLocked) installerStep = 4" class="cursor-pointer px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 4 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 4 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">4. Config</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span @click="if(!installerLocked) installerStep = 5" class="cursor-pointer px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 5 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 5 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">5. Admin</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span class="px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 6 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 6 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">6. Install</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span class="px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 7 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : (installerStep > 7 ? 'bg-blue-950/80 text-blue-300 border border-blue-600/30' : 'bg-slate-900/80 text-slate-600 border border-slate-800')">7. Finalize</span>
+              <span class="text-slate-700 hidden sm:inline">&rarr;</span>
+              <span class="px-2 py-0.5 rounded-md transition-colors" :class="installerStep === 8 ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.5)]' : 'bg-slate-900/80 text-slate-600 border border-slate-800'">8. Complete</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Card Container -->
+        <div class="rounded-2xl bg-[#080D1D]/90 border border-slate-800/80 p-6 sm:p-8 shadow-2xl backdrop-blur-md relative">
+          
+          <!-- RE-INSTALL LOCKDOWN SCREEN (Shown if installerLocked and not on complete) -->
+          <div x-show="installerLocked && installerStep !== 8" class="text-center space-y-6 py-4">
+            <div class="w-16 h-16 rounded-2xl bg-amber-600/20 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+              <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+
+            <div class="space-y-2">
+              <h1 class="text-2xl font-extrabold text-white tracking-tight">Application Already Installed</h1>
+              <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                ApexPulse SMM Panel is already configured and actively secured. The web installation wizard has been permanently locked to prevent unauthorized database overrides.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#050914] border border-slate-800 text-left text-xs space-y-2 font-mono">
+              <div class="text-slate-400 font-sans font-bold uppercase text-[11px]">Security Lock State</div>
+              <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80 text-amber-300 text-[11px] leading-relaxed">
+                Lock File Active: <span class="text-white">writable/installed.lock</span><br>
+                Database connection and admin accounts are protected from re-initialization.
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button @click="activeView = 'admin_dashboard'" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)] flex items-center justify-center gap-2">
+                <span>Proceed to Admin Console</span>
+              </button>
+              <button @click="installerLocked = false; installerStep = 1; showToast('Simulation lock reset for testing.', 'info')" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">
+                <span>Simulate Unlock / Re-run Wizard</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 1: WELCOME -->
+          <div x-show="!installerLocked && installerStep === 1" class="space-y-6">
+            <div class="space-y-3">
+              <h1 class="text-2xl font-bold text-white tracking-tight">Platform Installation Wizard</h1>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Welcome to the automated web-based setup for <strong class="text-blue-400">ApexPulse SMM</strong>. This wizard will inspect server requirements, verify MySQL 8.x connectivity, configure application parameters, and provision the primary administrator account.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#050914] border border-slate-800 space-y-3 text-xs">
+              <h3 class="font-bold text-slate-200 uppercase tracking-wider text-[11px]">Installation Overview</h3>
+              <ul class="space-y-2 text-slate-400">
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span>Requires PHP 8.2+ with PDO MySQL, cURL, OpenSSL, and Mbstring.</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span>Requires MySQL 8.x host credentials with schema creation privileges.</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span>Automated migration of 14 core tables with zero mock fallbacks.</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span>Permanent <code class="font-mono text-slate-300">writable/installed.lock</code> protection to prevent unauthorized overrides.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between">
+              <button @click="activeView = 'landing'" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                &larr; Exit to Homepage
+              </button>
+              <button @click="installerStep = 2" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)] flex items-center gap-2">
+                <span>Start Installation</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: REQUIREMENTS CHECK -->
+          <div x-show="!installerLocked && installerStep === 2" class="space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Step 2: System Requirements &amp; Permissions</h2>
+              <p class="text-xs text-slate-400 mt-1">Live inspection of hosting environment, required PHP extensions, and writable storage.</p>
+            </div>
+
+            <div class="rounded-xl bg-[#050914] border border-slate-800 overflow-hidden divide-y divide-slate-800/80 text-xs">
+              
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">PHP Version (>= 8.2 required)</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Detected PHP version: <span class="font-mono text-emerald-400 font-bold">8.2.14</span></p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">PDO &amp; PDO MySQL Driver</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Database connectivity driver for MySQL 8.x</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">cURL Extension</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Required for SMM Provider API v2 order forwarding</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">OpenSSL &amp; Mbstring Extensions</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Encrypted token hashing &amp; multibyte character support</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">JSON &amp; Fileinfo Extensions</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Payload serialization &amp; MIME validation</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-slate-800/10">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-200">Writable Directories (writable/cache, session, logs)</span>
+                    <span class="text-[10px] text-slate-500 font-mono">REQUIRED</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Permissions 0755/0775 verified</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-semibold text-[11px]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Passed
+                </span>
+              </div>
+
+            </div>
+
+            <div class="pt-2 flex items-center justify-between">
+              <button @click="installerStep = 1" class="text-xs text-slate-400 hover:text-white transition-colors">
+                &larr; Back
+              </button>
+              <button @click="installerStep = 3" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)] flex items-center gap-2">
+                <span>Continue to Database</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 3: DATABASE CONFIGURATION -->
+          <div x-show="!installerLocked && installerStep === 3" class="space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Step 3: Database Configuration</h2>
+              <p class="text-xs text-slate-400 mt-1">Specify your MySQL 8.x database credentials and perform a real connectivity verification.</p>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Database Host</label>
+                  <input type="text" x-model="installerHost" required placeholder="127.0.0.1 or localhost" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Port</label>
+                  <input type="number" x-model="installerPort" required placeholder="3306" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Database Name</label>
+                <input type="text" x-model="installerDbName" required placeholder="smm_panel" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                <p class="text-[10px] text-slate-500 mt-1">The installer will create the database automatically if privileges permit.</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
+                  <input type="text" x-model="installerDbUser" required placeholder="root" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+                  <div class="relative">
+                    <input :type="installerShowPass ? 'text' : 'password'" x-model="installerDbPass" placeholder="••••••••" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono pr-12">
+                    <button type="button" @click="installerShowPass = !installerShowPass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
+                      <span x-text="installerShowPass ? 'Hide' : 'Show'"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Connection Test Banner -->
+              <div x-show="installerDbTested" class="p-3.5 rounded-xl border text-xs leading-relaxed"
+                   :class="installerDbSuccess ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' : 'bg-rose-950/40 border-rose-500/30 text-rose-300'">
+                <div class="flex items-center gap-2 font-bold mb-1">
+                  <span x-text="installerDbSuccess ? '✓ Connection Verified' : '✗ Connection Failed'"></span>
+                </div>
+                <p x-text="installerDbMsg"></p>
+              </div>
+
+              <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800/80">
+                <button @click="installerStep = 2" class="text-xs text-slate-400 hover:text-white transition-colors">
+                  &larr; Back to Requirements
+                </button>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                  <button type="button" @click="testInstallerDb()" :disabled="installerTestingDb" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-colors disabled:opacity-50">
+                    <span x-show="!installerTestingDb">Test Database Connection</span>
+                    <span x-show="installerTestingDb" x-cloak>Testing MySQL PDO...</span>
+                  </button>
+
+                  <button type="button" @click="installerStep = 4" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)] flex items-center justify-center gap-2">
+                    <span>Save &amp; Continue</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: APPLICATION CONFIGURATION -->
+          <div x-show="!installerLocked && installerStep === 4" class="space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Step 4: Application Configuration</h2>
+              <p class="text-xs text-slate-400 mt-1">Configure global platform attributes, routing slug, base currency, and server timezones.</p>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Platform Site Name</label>
+                  <input type="text" x-model="installerSiteName" required class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Site URL (with trailing slash)</label>
+                  <input type="url" x-model="installerSiteUrl" required class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Admin Route Slug</label>
+                  <div class="flex items-center">
+                    <span class="px-3 py-2.5 bg-[#070B18] border border-r-0 border-slate-800 rounded-l-xl text-xs text-slate-500 font-mono">/</span>
+                    <input type="text" x-model="installerAdminSlug" required class="w-full bg-[#050914] border border-slate-800 rounded-r-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Default Platform Currency</label>
+                  <select x-model="installerCurrency" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                    <option value="INR" selected>INR (₹) - Base Accounting Currency</option>
+                    <option value="USD">USD ($) - US Dollar</option>
+                    <option value="EUR">EUR (€) - Euro</option>
+                    <option value="GBP">GBP (£) - British Pound</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Server Timezone</label>
+                  <select x-model="installerTimezone" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                    <option value="UTC" selected>UTC (Coordinated Universal Time)</option>
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST +05:30)</option>
+                    <option value="America/New_York">America/New_York (EST/EDT)</option>
+                    <option value="Europe/London">Europe/London (GMT/BST)</option>
+                    <option value="Europe/Paris">Europe/Paris (CET)</option>
+                    <option value="Asia/Dubai">Asia/Dubai (GST +04:00)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Environment</label>
+                  <select x-model="installerEnv" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <option value="production" selected>Production (Strict CSRF, Error logging)</option>
+                    <option value="development">Development (Debug output)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pt-4 flex items-center justify-between border-t border-slate-800/80">
+                <button @click="installerStep = 3" class="text-xs text-slate-400 hover:text-white transition-colors">
+                  &larr; Back to Database
+                </button>
+                <button @click="installerStep = 5" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.35)] flex items-center gap-2">
+                  <span>Continue to Admin Setup</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 5: PRIMARY ADMINISTRATOR SETUP -->
+          <div x-show="!installerLocked && installerStep === 5" class="space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Step 5: Primary Administrator Setup</h2>
+              <p class="text-xs text-slate-400 mt-1">This account will hold full superadmin credentials for the control console.</p>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Administrator Full Name</label>
+                  <input type="text" x-model="installerAdminName" required placeholder="Master Administrator" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Administrator Email</label>
+                  <input type="email" x-model="installerAdminEmail" required placeholder="admin@apexpulse.io" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password (Min. 8 characters)</label>
+                  <div class="relative">
+                    <input :type="installerShowPass ? 'text' : 'password'" x-model="installerAdminPass" required minlength="8" placeholder="••••••••" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 pr-12 font-mono">
+                    <button type="button" @click="installerShowPass = !installerShowPass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
+                      <span x-text="installerShowPass ? 'Hide' : 'Show'"></span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">Confirm Password</label>
+                  <input :type="installerShowPass ? 'text' : 'password'" x-model="installerAdminPassConfirm" required minlength="8" placeholder="••••••••" class="w-full bg-[#050914] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-[#050914] border border-slate-800 text-xs space-y-1 font-mono">
+                <div class="flex items-center gap-2" :class="installerAdminPass.length >= 8 ? 'text-emerald-400' : 'text-slate-500'">
+                  <span x-text="installerAdminPass.length >= 8 ? '✓' : '○'"></span>
+                  <span>Minimum 8 characters</span>
+                </div>
+                <div class="flex items-center gap-2" :class="(installerAdminPass && installerAdminPass === installerAdminPassConfirm) ? 'text-emerald-400' : 'text-slate-500'">
+                  <span x-text="(installerAdminPass && installerAdminPass === installerAdminPassConfirm) ? '✓' : '○'"></span>
+                  <span>Passwords match</span>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-xl bg-blue-950/20 border border-blue-500/20 text-xs text-slate-300 space-y-1">
+                <span class="font-bold text-blue-400 block text-[11px] uppercase tracking-wider">Next: Step 6 &amp; 7 Execution</span>
+                <p class="text-slate-400 text-[11px] leading-relaxed">
+                  Proceeding will run the MySQL migration runner, write baseline INR rates, and lock the application.
+                </p>
+              </div>
+
+              <div class="pt-4 flex items-center justify-between border-t border-slate-800/80">
+                <button @click="installerStep = 4" class="text-xs text-slate-400 hover:text-white transition-colors">
+                  &larr; Back to Config
+                </button>
+                <button @click="installerStep = 6; runInstallerMigration()" class="px-7 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-2">
+                  <span>Continue to Database Installation &rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 6 & 7: DATABASE INSTALLATION & FINALIZATION -->
+          <div x-show="!installerLocked && (installerStep === 6 || installerStep === 7)" class="space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white tracking-tight">Step 6 &amp; 7: Database Installation &amp; Finalization</h2>
+              <p class="text-xs text-slate-400 mt-1">Executing MySQL table migrations, seeding default records, and generating security lock files.</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs font-mono">
+                <span class="text-slate-400">Installation Progress:</span>
+                <span class="text-blue-400 font-bold" x-text="installerProgressPercent + '%'"></span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+                <div class="h-full bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-400 transition-all duration-300 rounded-full" :style="'width: ' + installerProgressPercent + '%'"></div>
+              </div>
+            </div>
+
+            <!-- Live Execution Stepped Cards -->
+            <div class="rounded-xl bg-[#050914] border border-slate-800 divide-y divide-slate-800/80 overflow-hidden text-xs">
+              
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 1 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 1 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 1 ? '✓' : '1'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 1 ? 'text-white' : 'text-slate-400'">Database Tables &amp; Schema Migration</div>
+                    <div class="text-[11px] text-slate-500">14 Core MySQL tables with indexes, foreign keys, and strict DECIMAL(16,4)</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 1 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 1 ? 'Completed' : 'Running...'"></span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 2 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 2 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 2 ? '✓' : '2'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 2 ? 'text-white' : 'text-slate-400'">Seed Base Currencies &amp; System Settings</div>
+                    <div class="text-[11px] text-slate-500">INR (₹) 1.000000 base currency, USD, EUR, GBP &amp; meta values</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 2 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 2 ? 'Completed' : (installerActiveSubStep === 1 ? 'Running...' : 'Pending')"></span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 3 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 3 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 3 ? '✓' : '3'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 3 ? 'text-white' : 'text-slate-400'">Seed Payment Gateways &amp; Categories</div>
+                    <div class="text-[11px] text-slate-500">Razorpay UPI (INR), Crypto gateways &amp; social channels</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 3 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 3 ? 'Completed' : (installerActiveSubStep === 2 ? 'Running...' : 'Pending')"></span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 4 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 4 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 4 ? '✓' : '4'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 4 ? 'text-white' : 'text-slate-400'">Provision Administrator &amp; Wallet</div>
+                    <div class="text-[11px] text-slate-500">Securely hashed superadmin account and initial ledger account</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 4 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 4 ? 'Completed' : (installerActiveSubStep === 3 ? 'Running...' : 'Pending')"></span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 5 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 5 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 5 ? '✓' : '5'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 5 ? 'text-white' : 'text-slate-400'">Step 7: Finalize Environment Configuration</div>
+                    <div class="text-[11px] text-slate-500">Writing production .env with encryption key &amp; base URL</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 5 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 5 ? 'Completed' : (installerActiveSubStep === 4 ? 'Running...' : 'Pending')"></span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between" :class="installerActiveSubStep >= 6 ? 'bg-slate-950/40' : ''">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono" :class="installerActiveSubStep >= 6 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'">
+                    <span x-text="installerActiveSubStep >= 6 ? '✓' : '6'"></span>
+                  </div>
+                  <div>
+                    <div class="font-semibold" :class="installerActiveSubStep >= 6 ? 'text-white' : 'text-slate-400'">Step 7: Create Security Lock File</div>
+                    <div class="text-[11px] text-slate-500">Generating writable/installed.lock to prevent re-install attacks</div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded" :class="installerActiveSubStep >= 6 ? 'text-emerald-400 bg-emerald-950/40' : 'text-slate-600'" x-text="installerActiveSubStep >= 6 ? 'Completed' : (installerActiveSubStep === 5 ? 'Running...' : 'Pending')"></span>
+              </div>
+
+            </div>
+
+            <div x-show="!installerInstalling && installerProgressPercent === 100" class="pt-2 flex justify-end">
+              <button @click="installerStep = 8" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2">
+                <span>View Completion Summary &rarr;</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 8: COMPLETE -->
+          <div x-show="installerStep === 8" class="space-y-6">
+            
+            <div class="text-center space-y-2 pb-2">
+              <div class="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.3)]">
+                <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <h1 class="text-2xl font-extrabold text-white tracking-tight">Installation Successfully Completed!</h1>
+              <p class="text-xs text-slate-400 max-w-md mx-auto">
+                ApexPulse SMM Panel is now configured, secured with production encryption keys, and ready for operations.
+              </p>
+            </div>
+
+            <!-- Summary Details -->
+            <div class="rounded-xl bg-[#050914] border border-slate-800 p-4 space-y-3">
+              <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Installation Configuration Summary</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80">
+                  <span class="text-slate-500 text-[10px] uppercase font-mono block">Site URL</span>
+                  <span class="font-mono text-white text-xs truncate block mt-0.5" x-text="installerSiteUrl"></span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80">
+                  <span class="text-slate-500 text-[10px] uppercase font-mono block">Admin Panel Gateway</span>
+                  <span class="font-mono text-blue-400 text-xs truncate block mt-0.5" x-text="installerSiteUrl + installerAdminSlug + '/login'"></span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80">
+                  <span class="text-slate-500 text-[10px] uppercase font-mono block">Administrator Account</span>
+                  <span class="font-mono text-white text-xs truncate block mt-0.5" x-text="installerAdminEmail"></span>
+                </div>
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80">
+                  <span class="text-slate-500 text-[10px] uppercase font-mono block">Base Currency &amp; Precision</span>
+                  <span class="font-mono text-white text-xs block mt-0.5">INR (₹) &bull; DECIMAL(16,4)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button @click="activeView = 'admin_dashboard'" class="py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span>Go to Admin Login</span>
+              </button>
+
+              <button @click="activeView = 'landing'" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs text-center transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                <span>Go to Website Homepage</span>
+              </button>
+            </div>
+
+            <!-- Security Warning -->
+            <div class="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200 space-y-1.5">
+              <div class="flex items-center gap-2 font-bold text-amber-400">
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>Security Warning &amp; Lockdown</span>
+              </div>
+              <p class="leading-relaxed text-[11px] text-amber-300/90">
+                The security lock file <code class="bg-black/40 px-1 py-0.5 rounded font-mono text-amber-300">writable/installed.lock</code> has been created. The installer is now permanently locked against replay or unauthorized overwrites. For added production security, you may optionally remove or restrict the <code class="font-mono text-amber-300">app/Controllers/Installer.php</code> file.
+              </p>
+            </div>
+
+            <!-- Automated Cron Job Setup -->
+            <div class="rounded-xl bg-[#050914] border border-slate-800 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Automated Background Cron Jobs</h3>
+                <span class="text-[10px] font-mono text-blue-400">cPanel / Linux Crontab</span>
+              </div>
+
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                To automate SMM provider order forwarding, status syncing, and live currency exchange updates, add these cron jobs to your server's crontab (e.g. via <code class="font-mono text-slate-300">crontab -e</code> or cPanel Cron Jobs):
+              </p>
+
+              <div class="space-y-2 text-xs font-mono">
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80 flex items-center justify-between gap-3">
+                  <div class="truncate">
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans">1. Order Dispatch to Providers (Every 2 minutes)</span>
+                    <span class="text-blue-400 text-[11px] truncate block select-all">*/2 * * * * cd /var/www/html && php spark orders:dispatch >> /dev/null 2>&1</span>
+                  </div>
+                  <button type="button" @click="copyCron('*/2 * * * * cd /var/www/html && php spark orders:dispatch >> /dev/null 2>&1', 1)" class="shrink-0 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors">
+                    <span x-text="installerCopiedIndex === 1 ? 'Copied!' : 'Copy'"></span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80 flex items-center justify-between gap-3">
+                  <div class="truncate">
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans">2. Provider Order Status Sync (Every 5 minutes)</span>
+                    <span class="text-blue-400 text-[11px] truncate block select-all">*/5 * * * * cd /var/www/html && php spark orders:sync >> /dev/null 2>&1</span>
+                  </div>
+                  <button type="button" @click="copyCron('*/5 * * * * cd /var/www/html && php spark orders:sync >> /dev/null 2>&1', 2)" class="shrink-0 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors">
+                    <span x-text="installerCopiedIndex === 2 ? 'Copied!' : 'Copy'"></span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80 flex items-center justify-between gap-3">
+                  <div class="truncate">
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans">3. Provider Balance Verification (Hourly)</span>
+                    <span class="text-blue-400 text-[11px] truncate block select-all">0 * * * * cd /var/www/html && php spark providers:balance >> /dev/null 2>&1</span>
+                  </div>
+                  <button type="button" @click="copyCron('0 * * * * cd /var/www/html && php spark providers:balance >> /dev/null 2>&1', 3)" class="shrink-0 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors">
+                    <span x-text="installerCopiedIndex === 3 ? 'Copied!' : 'Copy'"></span>
+                  </button>
+                </div>
+
+                <div class="p-3 rounded-lg bg-[#070C1A] border border-slate-800/80 flex items-center justify-between gap-3">
+                  <div class="truncate">
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans">4. Currency Exchange Rate Sync (Every 12 Hours)</span>
+                    <span class="text-blue-400 text-[11px] truncate block select-all">0 */12 * * * cd /var/www/html && php spark currencies:sync >> /dev/null 2>&1</span>
+                  </div>
+                  <button type="button" @click="copyCron('0 */12 * * * cd /var/www/html && php spark currencies:sync >> /dev/null 2>&1', 4)" class="shrink-0 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors">
+                    <span x-text="installerCopiedIndex === 4 ? 'Copied!' : 'Copy'"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Quiet Footer -->
+        <div class="text-center text-[11px] text-slate-500 font-mono">
+          &copy; 2026 ApexPulse SMM Engine. All sensitive credentials protected.
+        </div>
+
       </div>
 
     </div>
